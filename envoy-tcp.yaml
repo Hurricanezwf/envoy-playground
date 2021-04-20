@@ -1,0 +1,33 @@
+# This configuration is based on envoy-1.16.3
+
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  # listeners configuration
+  listeners:
+  # listener for main function
+  - name: tcp-proxy
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 8080 }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.tcp_proxy
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
+          stat_prefix: ingress_tcp
+          cluster: server
+          idle_timeout: 30s
+          max_connect_attempts: 1
+
+  # clusters configuration
+  clusters:
+  - name: server
+    connect_timeout: 3s
+    type: STRICT_DNS
+    hosts: [
+        { socket_address: { address: "172.19.53.60", port_value: 16001 }},
+        { socket_address: { address: "172.19.53.60", port_value: 26001 }},
+    ]
